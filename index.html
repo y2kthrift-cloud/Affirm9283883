@@ -1,0 +1,4256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
+  />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="light-content">
+  <meta name="theme-color" content="#f4f4f7">
+  <title>Affirm 1.0</title>
+  <!-- Preload critical images for instant loading -->
+  <link rel="preload" as="image" href="https://pfst.cf2.poecdn.net/base/image/2497e812c28bb6b783d2448918b76ec80c68fb069828ded46e0c256a6ad14ab4?w=1507&h=950">
+  <link rel="preload" as="image" href="https://pfst.cf2.poecdn.net/base/image/568d1f9443c7e4ea9f88dcf396be93c51c943bd730d6a4ab3cdab2dc5f65968e?w=1286&h=513">
+  <style>
+    :root {
+      color-scheme: light;
+      --affirm-blue: #0e0c5a;
+      --affirm-indigo: #26226b;
+      --affirm-gradient-start: #1a1a3a;
+      --affirm-gradient-end: #4338ca;
+      --surface: #ffffff;
+      --canvas: #f4f4f7;
+      --border: #d9d9e4;
+      --border-strong: #c3c3d3;
+      --text-primary: #0f1024;
+      --text-secondary: #4e4f63;
+      --text-tertiary: #7a7b92;
+      --success: #00a76f;
+      --warning: #f6a100;
+      --blur: rgba(255, 255, 255, 0.62);
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    /* Startup Page Styles */
+    .startup-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+
+    .startup-screen.hidden {
+      opacity: 0;
+      transform: scale(1.1);
+      pointer-events: none;
+    }
+
+    .startup-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(93, 92, 222, 0.2);
+      animation: logoFloat 3s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
+      transition: transform 0.3s ease;
+    }
+
+    .startup-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .startup-title {
+      font-size: 3rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      text-align: center;
+      color: var(--text-primary);
+      animation: titleFadeIn 1s ease-out 0.5s both;
+    }
+
+    .startup-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+      text-align: center;
+      animation: subtitleFadeIn 1s ease-out 1s both;
+    }
+
+    .startup-watermark {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      text-align: center;
+      opacity: 0.7;
+      animation: watermarkFadeIn 1s ease-out 1.5s both;
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      animation: dotsAppear 1s ease-out 2s both;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5D5CDE;
+      animation: dotBounce 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    /* Keep startup screen white in all modes */
+    @media (prefers-color-scheme: dark) {
+      .startup-screen {
+        background: #ffffff !important;
+      }
+      
+      .startup-title {
+        color: var(--text-primary);
+      }
+      
+      .startup-subtitle {
+        color: var(--text-secondary);
+      }
+      
+      .startup-watermark {
+        color: var(--text-tertiary);
+      }
+      
+      .startup-logo {
+        box-shadow: 0 10px 30px rgba(93, 92, 222, 0.2);
+      }
+      
+      .dot {
+        background: #5D5CDE;
+      }
+    }
+
+    /* Startup Animations */
+    @keyframes logoFloat {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes logoGlow {
+      0% {
+        box-shadow: 0 10px 30px rgba(93, 92, 222, 0.2);
+      }
+      100% {
+        box-shadow: 0 15px 40px rgba(93, 92, 222, 0.4);
+      }
+    }
+
+    @keyframes titleFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes subtitleFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes watermarkFadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+      }
+      to {
+        opacity: 0.7;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    @keyframes dotsAppear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes dotBounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+
+    /* Main App Styles */
+    .main-app {
+      opacity: 0;
+      transition: opacity 0.8s ease-in;
+    }
+
+    .main-app.visible {
+      opacity: 1;
+    }
+    
+    /* Preload critical images for instant loading */
+    .credit-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: url('https://pfst.cf2.poecdn.net/base/image/2497e812c28bb6b783d2448918b76ec80c68fb069828ded46e0c256a6ad14ab4?w=1507&h=950');
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text-primary);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      /* Prevent scroll issues that could affect navigation */
+      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden;
+    }
+
+    .app-shell {
+      width: min(430px, 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0.25rem min(1.25rem, 4vw) 7rem;
+      gap: 1rem;
+    }
+
+    @media (max-width: 380px) {
+      .app-shell {
+        padding: 0.25rem min(0.9rem, 4vw) 7rem;
+      }
+      
+      .startup-title {
+        font-size: 2.5rem;
+      }
+      
+      .startup-subtitle {
+        font-size: 1rem;
+        padding: 0 1rem;
+      }
+      
+      .startup-logo {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .startup-watermark {
+        font-size: 0.7rem;
+        bottom: 1rem;
+        padding: 0 1rem;
+      }
+    }
+
+    /* Page System - Instant switching */
+    .page {
+      display: none !important;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .page.active {
+      display: flex !important;
+    }
+
+    header.top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      margin-top: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      font-size: 1.05rem;
+    }
+
+    .brand-logo {
+      position: relative;
+      width: 5rem;
+      height: 5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: url('https://pfst.cf2.poecdn.net/base/image/568d1f9443c7e4ea9f88dcf396be93c51c943bd730d6a4ab3cdab2dc5f65968e?w=1286&h=513');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin-left: 0.5rem;
+      margin-top: -0.5rem;
+    }
+
+    .brand-logo.money-title {
+      background-image: none;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--text-primary);
+      width: auto;
+      height: auto;
+      margin-left: 1rem;
+      margin-top: 1rem;
+    }
+
+    .brand-wordmark {
+      display: none;
+    }
+
+    .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .icon-button {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 0.85rem;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.9);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 16px rgba(21, 20, 54, 0.08);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      cursor: pointer;
+    }
+
+    .icon-button svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      stroke: #000000;
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    .icon-button:active {
+      transform: scale(0.95);
+      box-shadow: 0 6px 12px rgba(21, 20, 54, 0.12);
+    }
+
+    .action-buttons {
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .action-buttons:active {
+      transform: scale(0.95);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      box-shadow: 0 14px 30px rgba(13, 15, 60, 0.11);
+    }
+
+    /* Home Page Balance Display */
+    .balance-display {
+      text-align: center;
+      padding: 0.5rem 0;
+      margin-bottom: 2rem;
+    }
+
+    .balance-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .balance-amount {
+      font-size: 2.5rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    /* Money Page Title */
+    .money-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .money-title h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .power-card {
+      background: 
+        url('https://pfst.cf2.poecdn.net/base/image/76267963d45be760a344f0199e13b4c07baaea39768bb58410a7e810ce8e5f3a?w=800&h=585'),
+        linear-gradient(135deg, var(--affirm-gradient-start), var(--affirm-gradient-end));
+      background-size: 80%, cover;
+      background-position: center, center;
+      background-repeat: no-repeat, no-repeat;
+      background-blend-mode: overlay;
+      color: #f6f6fb;
+      position: relative;
+      overflow: hidden;
+      padding: clamp(0.85rem, 3.5vw, 1.1rem);
+      border-radius: 1.35rem;
+      box-shadow: 0 30px 60px rgba(9, 10, 46, 0.28);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .power-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .power-card:active {
+      transform: scale(0.98);
+    }
+
+    .power-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+      );
+      transform: skewX(-25deg);
+      animation: shine 6s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    .power-card::before {
+      content: "";
+      position: absolute;
+      width: 16rem;
+      height: 16rem;
+      background: radial-gradient(circle, rgba(124, 151, 255, 0.2) 0%, transparent 68%);
+      top: -7rem;
+      right: -6rem;
+      filter: blur(0.5px);
+      z-index: 0;
+    }
+
+    @keyframes shine {
+      0% {
+        left: -100%;
+      }
+      50% {
+        left: 100%;
+      }
+      100% {
+        left: 100%;
+      }
+    }
+
+    .power-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      z-index: 1;
+    }
+
+    .power-header h1 {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    .power-chip {
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.73rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .power-chip svg {
+      width: 0.9rem;
+      height: 0.9rem;
+      stroke: none;
+      fill: #76ffcf;
+    }
+
+    .power-amount {
+      font-size: clamp(2.15rem, 7vw, 2.7rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      z-index: 1;
+    }
+
+    .power-amount span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      opacity: 0.78;
+      position: relative;
+      top: -0.4rem;
+    }
+
+    .power-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      font-size: 0.76rem;
+      opacity: 0.78;
+      z-index: 1;
+    }
+
+    .progress-wrap {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 1rem;
+      padding: 0.55rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      z-index: 1;
+    }
+
+    .progress-labels {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 500;
+      opacity: 0.88;
+    }
+
+    .progress-bar {
+      height: 0.45rem;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar span {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, #84ffd7, #5ad6ff);
+      width: 58%;
+      border-radius: inherit;
+    }
+
+    .power-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.6rem;
+      z-index: 1;
+    }
+
+    .power-actions button {
+      padding: 0.65rem 0.75rem;
+      border-radius: 0.95rem;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.12);
+      color: inherit;
+      font-weight: 540;
+      font-size: 0.83rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .power-actions button svg {
+      width: 1rem;
+      height: 1rem;
+      stroke: #f5f8ff;
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    .power-actions button:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    /* Card Page Styles */
+    .card-page {
+      gap: 1rem;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-display {
+      background: var(--surface);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      box-shadow: 0 14px 30px rgba(13, 15, 60, 0.11);
+    }
+
+    .card-visual {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .credit-card {
+      width: 100%;
+      max-width: 350px;
+      height: 220px;
+      background-image: url('https://pfst.cf2.poecdn.net/base/image/2497e812c28bb6b783d2448918b76ec80c68fb069828ded46e0c256a6ad14ab4?w=1507&h=950');
+      background-size: cover;
+      background-position: center;
+      border-radius: 1rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(9, 10, 46, 0.25);
+      color: white;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .credit-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .credit-card:active {
+      transform: scale(0.98);
+    }
+
+    .card-number {
+      position: absolute;
+      top: 50%;
+      left: 68%;
+      transform: translate(-50%, -50%);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+    }
+
+    .card-name {
+      position: absolute;
+      bottom: 2.8rem;
+      left: 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.05em;
+    }
+
+    .card-expiry {
+      position: absolute;
+      bottom: 2.8rem;
+      right: 6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-label {
+      position: absolute;
+      font-size: 0.6rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-name-label {
+      bottom: 4.2rem;
+      left: 1.5rem;
+    }
+
+    .card-expiry-label {
+      bottom: 4.2rem;
+      right: 6rem;
+    }
+
+    .card-info {
+      text-align: left;
+    }
+
+    .card-detail {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-detail:last-child {
+      border-bottom: none;
+    }
+
+    .card-detail-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .card-detail-value {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .transactions-section {
+      background: var(--surface);
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      box-shadow: 0 14px 30px rgba(13, 15, 60, 0.11);
+    }
+
+    .transactions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .transactions-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 650;
+      color: var(--text-primary);
+    }
+
+    .see-all-btn {
+      background: none;
+      border: none;
+      color: var(--affirm-blue);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .see-all-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Apple Wallet Button Styles */
+    .apple-wallet-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .apple-wallet-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+      max-width: 180px;
+      width: 60%;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .apple-wallet-button:hover {
+      opacity: 0.9;
+    }
+
+    .apple-wallet-button:active {
+      transform: scale(0.95);
+    }
+
+    .apple-wallet-button img {
+      border-radius: 8px;
+    }
+
+    /* Credit Info Cards */
+    .credit-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border-radius: 1.2rem;
+      padding: 1.25rem;
+      box-shadow: 0 14px 30px rgba(13, 15, 60, 0.11);
+    }
+
+    .info-card h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+      font-weight: 650;
+      color: var(--text-primary);
+    }
+
+    .credit-score {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      cursor: pointer;
+    }
+
+    .score-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #00a76f 0deg 252deg, #e5e7eb 252deg 360deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      transition: transform 120ms ease;
+    }
+
+    .credit-score:hover .score-circle {
+      transform: scale(1.05);
+    }
+
+    .score-circle::after {
+      content: '';
+      width: 45px;
+      height: 45px;
+      background: var(--surface);
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .score-number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      z-index: 1;
+    }
+
+    .score-info {
+      flex: 1;
+    }
+
+    .score-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+    }
+
+    .score-range {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+
+    .edit-indicator {
+      color: var(--text-tertiary);
+      font-size: 0.7rem;
+      opacity: 0.6;
+    }
+
+    .payment-plans {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .plan-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: rgba(93, 92, 222, 0.05);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(93, 92, 222, 0.1);
+    }
+
+    .plan-details h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .plan-details p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .plan-rate {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--affirm-blue);
+    }
+
+    .recent-activity {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background-color 120ms ease;
+      border-radius: 0.5rem;
+    }
+
+    .activity-item:hover {
+      background-color: rgba(93, 92, 222, 0.05);
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-details h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .activity-details p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .activity-amount {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .activity-amount.positive {
+      color: var(--success);
+    }
+
+    .activity-amount.negative {
+      color: var(--text-primary);
+    }
+
+    .search-bar {
+      background: var(--surface);
+      border-radius: 1.12rem;
+      border: 1px solid rgba(22, 20, 64, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.85rem 1rem;
+      box-shadow: 0 12px 26px rgba(22, 20, 64, 0.08);
+    }
+
+    .search-bar svg {
+      width: 1.05rem;
+      height: 1.05rem;
+      stroke: var(--text-tertiary);
+      stroke-width: 1.7;
+      fill: none;
+    }
+
+    .search-bar input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      padding-top: 0.2rem;
+    }
+
+    .store-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .store-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .store-header button {
+      border: none;
+      background: none;
+      color: var(--affirm-blue);
+      font-weight: 600;
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+    }
+
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(4.4rem, 1fr));
+      gap: 0.75rem 0.85rem;
+    }
+
+    .store-tile {
+      background: var(--surface);
+      border-radius: 1rem;
+      padding: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 10px 20px rgba(21, 18, 68, 0.06);
+      border: 1px solid rgba(17, 16, 43, 0.04);
+    }
+
+    .store-avatar {
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 0.95rem;
+      display: grid;
+      place-items: center;
+      font-size: 0.95rem;
+      font-weight: 640;
+      color: #0c0e35;
+    }
+
+    .store-name {
+      font-size: 0.78rem;
+      text-align: center;
+      color: var(--text-secondary);
+      line-height: 1.18;
+    }
+
+    .promo-card {
+      background: var(--surface);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      display: grid;
+      gap: 0.6rem;
+      box-shadow: 0 18px 36px rgba(9, 10, 54, 0.09);
+      border: 1px solid rgba(17, 14, 56, 0.05);
+    }
+
+    .promo-card h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 650;
+    }
+
+    .promo-card p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .promo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--success);
+      background: rgba(0, 167, 111, 0.12);
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    /* Fixed Navigation Bar - Stable positioning that doesn't move */
+    nav.tab-bar {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 50% !important;
+      width: 100% !important;
+      max-width: 430px !important;
+      transform: translateX(-50%) !important;
+      -webkit-transform: translateX(-50%) !important;
+      padding: 0.5rem 0 0.75rem 0;
+      background: white;
+      z-index: 1003 !important;
+      cursor: pointer;
+      /* Prevent any layout interference */
+      box-sizing: border-box;
+      pointer-events: auto;
+      /* Add white padding under navigation */
+      box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1);
+      /* Prevent viewport changes from affecting position */
+      contain: layout style paint;
+      /* Ensure consistent positioning across all states */
+      margin: 0 !important;
+      right: auto !important;
+      /* Prevent scroll and layout changes from affecting position */
+      will-change: auto;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    
+    /* Ensure navigation stays perfectly centered even when modals are open */
+    .modal-backdrop.active ~ .app-shell nav.tab-bar,
+    body:has(.modal-backdrop.active) nav.tab-bar,
+    .search-modal.active ~ .app-shell nav.tab-bar,
+    body.modal-open nav.tab-bar,
+    body.search-open nav.tab-bar {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      -webkit-transform: translateX(-50%) !important;
+      width: 100% !important;
+      max-width: 430px !important;
+      margin: 0 !important;
+      right: auto !important;
+      z-index: 1003 !important;
+    }
+    
+    /* Prevent any scrolling or body changes from affecting navigation */
+    body {
+      /* Maintain stable layout for navigation */
+      position: relative;
+    }
+    
+    /* Ensure navigation is always on top and stable */
+    nav.tab-bar img {
+      width: 100%;
+      height: auto;
+      display: block;
+      /* Prevent image loading shifts */
+      min-height: 60px;
+    }
+
+    /* Modal styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 14, 36, 0.42);
+      backdrop-filter: blur(7px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      padding: min(2rem, 10vw);
+      z-index: 999;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: min(430px, 100%);
+      background: rgba(246, 247, 253, 0.96);
+      border-radius: 1.4rem 1.4rem 0.85rem 0.85rem;
+      padding: 1.4rem 1.25rem 1.35rem;
+      box-shadow: 0 -28px 44px rgba(7, 8, 38, 0.24);
+      transform: translateY(12%);
+      transition: transform 180ms ease;
+    }
+
+    .modal-backdrop.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 650;
+      color: var(--affirm-blue);
+    }
+
+    .close-btn {
+      border: none;
+      background: rgba(255, 255, 255, 0.72);
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 0.9rem;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 20px rgba(11, 12, 44, 0.12);
+      cursor: pointer;
+    }
+
+    .close-btn svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      stroke: var(--affirm-blue);
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    .editor-card {
+      background: var(--surface);
+      border-radius: 1.1rem;
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+      box-shadow: 0 16px 30px rgba(10, 12, 60, 0.08);
+    }
+
+    .editor-field {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .editor-field label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .input-shell {
+      background: rgba(244, 245, 252, 0.88);
+      border-radius: 0.95rem;
+      border: 1px solid rgba(16, 16, 56, 0.1);
+      padding: 0.6rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .input-shell span {
+      font-weight: 600;
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .input-shell input[type="number"] {
+      border: none;
+      outline: none;
+      font-size: 1.1rem;
+      font-weight: 650;
+      background: transparent;
+      color: var(--affirm-indigo);
+      width: 100%;
+    }
+
+    .input-shell input[type="text"] {
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: transparent;
+      color: var(--affirm-indigo);
+      width: 100%;
+    }
+
+    .Slider {
+      width: 100%;
+      accent-color: var(--affirm-blue);
+    }
+
+    .editor-meta {
+      font-size: 0.74rem;
+      color: var(--text-tertiary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--affirm-blue);
+      cursor: pointer;
+    }
+
+    .checkbox-text {
+      user-select: none;
+    }
+
+    /* Search Modal Styles - More Compact */
+    .search-modal {
+      position: fixed;
+      inset: 0;
+      background: var(--canvas);
+      z-index: 1001;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .search-modal.active {
+      display: flex;
+    }
+
+    .search-modal-header {
+      padding: 1.5rem 1rem 0.25rem;
+      background: var(--canvas);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .search-modal-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.7rem 0.9rem;
+      background: var(--surface);
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(16, 16, 56, 0.08);
+    }
+
+    .search-modal-bar svg {
+      width: 1rem;
+      height: 1rem;
+      stroke: var(--text-tertiary);
+      stroke-width: 1.7;
+      fill: none;
+    }
+
+    .search-modal-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .search-modal-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .search-cancel {
+      background: none;
+      border: none;
+      color: var(--affirm-blue);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.5rem 0;
+      flex-shrink: 0;
+    }
+
+    .search-modal-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1rem 1rem;
+    }
+
+    .search-section {
+      margin-bottom: 1rem;
+    }
+
+    .search-section h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .search-results {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .store-result {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.5rem;
+      background: transparent;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+
+    .store-result:hover {
+      background: rgba(244, 245, 252, 0.6);
+    }
+
+    .store-result:active {
+      transform: scale(0.98);
+    }
+
+    .store-logo {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .store-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+
+    .store-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .store-result .store-name {
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: var(--text-primary);
+      margin: 0 0 0.1rem 0;
+      text-align: left;
+    }
+
+    .store-details {
+      font-size: 0.75rem;
+      color: #5574cd;
+      font-weight: 400;
+      margin: 0;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .search-highlight {
+      background: rgba(93, 92, 222, 0.15);
+      color: var(--affirm-blue);
+      padding: 0.1rem 0.2rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.85rem;
+      margin-top: 1.1rem;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      border-radius: 1rem;
+      padding: 0.82rem;
+      font-size: 0.92rem;
+      font-weight: 640;
+      cursor: pointer;
+      border: none;
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(17, 18, 60, 0.14);
+      color: var(--affirm-blue);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #100f5b, #26226b);
+      color: #f7f7ff;
+      box-shadow: 0 18px 28px rgba(14, 14, 58, 0.22);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .modal-actions button:active {
+      transform: scale(0.97);
+      box-shadow: 0 12px 18px rgba(10, 12, 48, 0.16);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 8.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(200%);
+      background: rgba(12, 13, 44, 0.92);
+      color: #f9f9ff;
+      padding: 0.75rem 1.1rem;
+      border-radius: 0.95rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 14px 26px rgba(5, 7, 32, 0.28);
+      transition: transform 200ms cubic-bezier(0.2, 0.7, 0.4, 1.1);
+      display: none;
+      align-items: center;
+      gap: 0.55rem;
+      z-index: 1000;
+    }
+
+    .toast.active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast svg {
+      width: 1rem;
+      height: 1rem;
+      stroke: #7dffbe;
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    /* Settings button for money page */
+    .settings-btn {
+      position: absolute;
+      right: 0;
+      top: 0.75rem;
+    }
+
+    /* Varied Width Sections */
+    .two-column-section {
+      display: grid;
+      grid-template-columns: 1fr 1.8fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 380px) {
+      .two-column-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    .compact-card {
+      padding: 1rem;
+    }
+
+    .compact-card h3 {
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+
+    .tips-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .tip-item h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .tip-item p {
+      margin: 0;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    .offer-card {
+      background: linear-gradient(135deg, rgba(93, 92, 222, 0.05), rgba(93, 92, 222, 0.02));
+      border: 1px solid rgba(93, 92, 222, 0.1);
+    }
+
+    .offer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .offer-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 650;
+    }
+
+    .offer-badge {
+      background: var(--warning);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .offer-item h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .offer-item p {
+      margin: 0 0 1rem 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .offer-cta {
+      background: var(--affirm-blue);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .offer-cta:active {
+      transform: scale(0.95);
+    }
+
+    .disclaimer-card {
+      background: rgba(244, 245, 252, 0.6);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+
+    .disclaimer-content h4 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.9rem;
+      font-weight: 650;
+      color: var(--text-primary);
+    }
+
+    .disclaimer-content p {
+      margin: 0 0 1rem 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .disclaimer-content a {
+      color: var(--affirm-blue);
+      text-decoration: none;
+    }
+
+    .disclaimer-content a:hover {
+      text-decoration: underline;
+    }
+
+    .legal-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .legal-links a {
+      font-size: 0.7rem;
+      color: var(--text-tertiary);
+      text-decoration: none;
+    }
+
+    .legal-links a:hover {
+      color: var(--affirm-blue);
+      text-decoration: underline;
+    }
+
+    .affirm-branding {
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .affirm-branding p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    .affirm-branding strong {
+      color: var(--affirm-blue);
+    }
+
+    /* Card Page Compact Sections */
+    .card-info-summary {
+      background: var(--surface);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 8px 20px rgba(13, 15, 60, 0.08);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .summary-item {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .summary-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 1rem;
+      font-weight: 650;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .action-btn {
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .action-btn svg {
+      width: 1rem;
+      height: 1rem;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .action-btn.primary {
+      background: var(--affirm-blue);
+      color: white;
+      box-shadow: 0 12px 24px rgba(14, 12, 90, 0.15);
+    }
+
+    .action-btn.secondary {
+      background: rgba(93, 92, 222, 0.1);
+      color: var(--affirm-blue);
+      border: 1px solid rgba(93, 92, 222, 0.2);
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .card-controls, .spending-limits, .card-transactions, .rewards-section, .support-section {
+      background: var(--surface);
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 8px 20px rgba(13, 15, 60, 0.08);
+    }
+
+    .card-controls h3, .spending-limits h3, .rewards-section h3, .support-section h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 650;
+      color: var(--text-primary);
+    }
+
+    .control-grid, .support-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    .control-item, .support-item {
+      background: rgba(244, 245, 252, 0.7);
+      border: 1px solid rgba(93, 92, 222, 0.1);
+      border-radius: 0.75rem;
+      padding: 0.75rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: all 120ms ease;
+      text-align: center;
+    }
+
+    .control-item:hover, .support-item:hover {
+      background: rgba(93, 92, 222, 0.08);
+      border-color: rgba(93, 92, 222, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .control-item svg, .support-item svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      stroke: var(--affirm-blue);
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    .control-item span, .support-item span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .limit-item {
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      transition: background-color 120ms ease;
+    }
+
+    .limit-item:hover {
+      background-color: rgba(93, 92, 222, 0.05);
+    }
+
+    .limit-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .limit-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+
+    .limit-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .limit-amount {
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--affirm-blue);
+    }
+
+    .limit-progress {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .limit-bar {
+      height: 0.35rem;
+      background: rgba(93, 92, 222, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .limit-bar span {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--affirm-blue), #5b59d6);
+      border-radius: inherit;
+    }
+
+    .limit-used {
+      font-size: 0.7rem;
+      color: var(--text-tertiary);
+    }
+
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .reward-item {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background: rgba(244, 245, 252, 0.7);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(93, 92, 222, 0.1);
+    }
+
+    .reward-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--affirm-blue);
+      margin-bottom: 0.25rem;
+    }
+
+    .reward-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .credit-disclaimer {
+      background: rgba(244, 245, 252, 0.8);
+      border: 2px solid rgba(93, 92, 222, 0.1);
+    }
+
+    .credit-disclaimer .disclaimer-content h4 {
+      color: var(--affirm-blue);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .credit-disclaimer .disclaimer-content p {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .credit-disclaimer .disclaimer-content strong {
+      color: var(--text-primary);
+      font-weight: 650;
+    }
+
+    /* Touch interactions for startup */
+    @media (hover: none) and (pointer: coarse) {
+      .startup-logo:active {
+        transform: scale(0.95);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Startup Screen -->
+  <div class="startup-screen" id="startup-screen">
+    <img 
+      src="https://pfst.cf2.poecdn.net/base/image/7df12beca90aa34ccfa1e4b209616a6fb60587c8ee5adc222a9df6a1f9aa0321?w=447&h=447" 
+      alt="Affirm Logo" 
+      class="startup-logo"
+      loading="eager"
+    />
+    
+    <h1 class="startup-title">Affirm 1.0</h1>
+    
+    <p class="startup-subtitle">Full Remake By @W1nR4r On Telegram</p>
+    
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    
+    <div class="startup-watermark">
+      Made By @W1nR4r on telegram
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="main-app" id="main-app">
+    <div class="app-shell">
+      <header class="top-bar">
+        <div class="brand">
+          <div class="brand-logo" aria-hidden="true"></div>
+          <div class="brand-wordmark"></div>
+        </div>
+        <div class="actions">
+          <!-- Home page top right image -->
+          <div class="home-top-image">
+            <img 
+              src="https://pfst.cf2.poecdn.net/base/image/260000a40f584127f8ae3f3ee307d992a697e267ef571096c09a6f58f30f2451?w=319&h=180" 
+              alt="Account and messages icons"
+              style="height: 3.5rem; width: auto; border-radius: 0.5rem; margin-top: -0.25rem;"
+            />
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <!-- Home Page -->
+        <div class="page home-page active">
+          <section class="balance-display">
+            <div class="balance-label">Available Balance</div>
+            <div class="balance-amount" data-bind="homeBalance">$7,500</div>
+          </section>
+
+          <section class="search-bar" id="main-search-bar">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m20 20-3.5-3.5"></path>
+            </svg>
+            <input
+              type="search"
+              placeholder="Search millions of stores"
+              aria-label="Search stores"
+              readonly
+            />
+          </section>
+
+          <section class="store-section">
+            <div class="store-header">
+              <span>Popular stores</span>
+              <button type="button">
+                View all
+                <svg viewBox="0 0 24 24">
+                  <path d="m9 6 6 6-6 6"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="store-grid-image">
+              <img 
+                src="https://pfst.cf2.poecdn.net/base/image/d45c1aba215655f1deca506ca205753cbd12f0a39e56636db186a6a0c0bd84a0?w=1125&h=742"
+                alt="Popular stores including Amazon, Expedia, Walmart, Tire Rack, NECTAR, Dyson, Neiman Marcus, and StubHub"
+                style="width: 100%; height: auto;"
+              />
+            </div>
+          </section>
+        </div>
+
+        <!-- Card Page -->
+        <div class="page card-page">
+          <div class="credit-card" id="card-display-area">
+            <div class="card-number" id="card-number">**** **** **** 4242</div>
+            <div class="card-label card-name-label">CARDHOLDER NAME</div>
+            <div class="card-name" id="card-name">John Doe</div>
+            <div class="card-label card-expiry-label">EXPIRES</div>
+            <div class="card-expiry" id="card-expiry">12/28</div>
+          </div>
+
+          <!-- Apple Wallet Button -->
+          <div class="apple-wallet-container">
+            <button class="apple-wallet-button" id="add-to-wallet" aria-label="Add card to Apple Wallet">
+              <img 
+                src="https://pfst.cf2.poecdn.net/base/image/b604cac18ef71e265b8c8a57d20ff0bd5f0e8f48d316d84feee1ca7811037ac5?w=1200&h=371" 
+                alt="Add to Apple Wallet"
+                style="width: 100%; height: auto; display: block;"
+              />
+            </button>
+          </div>
+
+          <!-- Card Info Summary -->
+          <div class="card-info-summary">
+            <div class="summary-item">
+              <span class="summary-label">Available Credit</span>
+              <span class="summary-value" id="available-credit">$12,000</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Current Balance</span>
+              <span class="summary-value" id="current-balance">$7,500</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Next Payment</span>
+              <span class="summary-value" id="next-payment">$76.67 due Feb 15</span>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card-actions">
+            <button class="action-btn primary" id="pay-bill-btn">
+              <svg viewBox="0 0 24 24"><path d="M12 2v20m9-9H3"></path></svg>
+              Pay Bill
+            </button>
+            <button class="action-btn secondary" id="autopay-btn">
+              <svg viewBox="0 0 24 24"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+              AutoPay
+            </button>
+          </div>
+
+          <!-- Card Controls -->
+          <div class="card-controls">
+            <h3>Card Controls</h3>
+            <div class="control-grid">
+              <button class="control-item" id="freeze-card">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><circle cx="12" cy="16" r="1"></circle><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>Freeze Card</span>
+              </button>
+              <button class="control-item" id="activate-card">
+                <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle></svg>
+                <span>Activate</span>
+              </button>
+              <button class="control-item" id="replace-card">
+                <svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                <span>Replace</span>
+              </button>
+              <button class="control-item" id="pin-settings">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>PIN & Security</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Spending & Limits -->
+          <div class="spending-limits" id="spending-limits-section">
+            <h3>Spending & Limits</h3>
+            <div class="limit-item" data-limit-type="daily">
+              <div class="limit-info">
+                <span class="limit-label">Daily Purchase Limit</span>
+                <span class="limit-amount">$2,500</span>
+              </div>
+              <div class="limit-progress">
+                <div class="limit-bar"><span style="width: 24%;"></span></div>
+                <span class="limit-used">$600 used today</span>
+              </div>
+            </div>
+            <div class="limit-item" data-limit-type="atm">
+              <div class="limit-info">
+                <span class="limit-label">ATM Withdrawal Limit</span>
+                <span class="limit-amount">$500</span>
+              </div>
+              <div class="limit-progress">
+                <div class="limit-bar"><span style="width: 0%;"></span></div>
+                <span class="limit-used">$0 used today</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="card-transactions">
+            <div class="transactions-header">
+              <h3>Recent Transactions</h3>
+            </div>
+            <div class="recent-activity" id="card-recent-activity">
+              <div class="activity-item">
+                <div class="activity-details">
+                  <h4>Amazon.com</h4>
+                  <p>Dec 15, 2024 • Online Purchase</p>
+                </div>
+                <div class="activity-amount negative">-$459.99</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <h4>Payment Received</h4>
+                  <p>Dec 10, 2024 • AutoPay</p>
+                </div>
+                <div class="activity-amount positive">+$76.67</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <h4>Target Store #1234</h4>
+                  <p>Dec 8, 2024 • In-Store Purchase</p>
+                </div>
+                <div class="activity-amount negative">-$189.50</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rewards & Benefits -->
+          <div class="rewards-section">
+            <h3>Rewards & Benefits</h3>
+            <div class="rewards-grid">
+              <div class="reward-item">
+                <div class="reward-value">1,247</div>
+                <div class="reward-label">Points Earned</div>
+              </div>
+              <div class="reward-item">
+                <div class="reward-value">$12.47</div>
+                <div class="reward-label">Cash Back Available</div>
+              </div>
+              <div class="reward-item">
+                <div class="reward-value">2%</div>
+                <div class="reward-label">Dining Rewards</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Support -->
+          <div class="support-section">
+            <h3>Support & Services</h3>
+            <div class="support-grid">
+              <button class="support-item" id="report-issue-btn">
+                <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                <span>Report Issue</span>
+              </button>
+              <button class="support-item" id="statements-btn">
+                <svg viewBox="0 0 24 24"><path d="M9 11H1v12l8-4.5L17 23V11H9z"></path><path d="M21 3H5a2 2 0 0 0-2 2v6"></path></svg>
+                <span>Statements</span>
+              </button>
+              <button class="support-item" id="live-chat-btn">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span>Live Chat</span>
+              </button>
+              <button class="support-item" id="call-support-btn">
+                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <span>Call Support</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Affirm Credit Card Disclaimer -->
+          <div class="disclaimer-card credit-disclaimer">
+            <div class="disclaimer-content">
+              <h4>Important Credit Card Information</h4>
+              <p><strong>APR:</strong> 0% intro APR for 12 months, then 15.99%-26.99% variable APR. Penalty APR up to 29.99%. Cash advance APR 29.99%.</p>
+              
+              <p><strong>Fees:</strong> $0 Annual Fee • Late Payment up to $40 • Returned Payment up to $40 • Balance Transfer 3% ($5 min) • Cash Advance 5% ($10 min)</p>
+              
+              <p><strong>Credit Approval:</strong> The Affirm Card is issued by Cross River Bank, Member FDIC, pursuant to a license from Visa U.S.A. Inc. Subject to credit approval.</p>
+              
+              <p><strong>Important:</strong> Disputes resolved by binding arbitration. Military personnel protected by 36% APR cap. Information accurate as of Dec 2024. Call 1-855-423-3729 for updates.</p>
+              
+              <div class="legal-links">
+                <a href="#">Full Terms</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Pricing Details</a>
+                <a href="#">Contact Support</a>
+              </div>
+              
+              <div class="affirm-branding">
+                <p>Powered by <strong>Affirm</strong> • Issued by Cross River Bank, Member FDIC</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Money Page -->
+        <div class="page money-page">
+          <section class="power-card" id="power-card-area" style="margin-top: 2rem;">
+            <div class="power-header">
+              <h1>Purchasing Power</h1>
+              <div class="power-chip">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M11 16.2 7.8 13l1.4-1.4L11 13.4l4.8-4.8L17.2 10z"
+                  ></path>
+                </svg>
+                Prequalified
+              </div>
+            </div>
+            <div class="power-amount" data-bind="currentPower">
+              $7,500
+              <span>available now</span>
+            </div>
+            <div class="power-meta">
+              <span>Updated 2 hours ago</span>
+              <span>APR starting at 0%</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-labels">
+                <span id="progress-used">Used $4,500</span>
+                <span id="progress-max">Max $12,000</span>
+              </div>
+              <div class="progress-bar">
+                <span id="progress-bar-fill" style="width: 37.5%"></span>
+              </div>
+            </div>
+            <div class="power-actions">
+              <button type="button">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 5v14"></path>
+                  <path d="M5 12h14"></path>
+                </svg>
+                Increase power
+              </button>
+              <button type="button">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 6v6l4 2"></path>
+                  <circle cx="12" cy="12" r="9"></circle>
+                </svg>
+                Payment timeline
+              </button>
+            </div>
+          </section>
+
+          <!-- Credit Information Section -->
+          <section class="credit-info">
+            <!-- Credit Score Card -->
+            <div class="info-card">
+              <h3>Credit Score</h3>
+              <div class="credit-score" id="credit-score-display">
+                <div class="score-circle" id="score-circle">
+                  <div class="score-number" id="score-number">742</div>
+                </div>
+                <div class="score-info">
+                  <div class="score-label" id="score-label">Excellent Credit</div>
+                  <div class="score-range" id="score-range">740-850 range</div>
+                  <div class="edit-indicator">Provided by Experian.com</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Plans Card -->
+            <div class="info-card">
+              <h3>Available Payment Plans</h3>
+              <div class="payment-plans">
+                <div class="plan-option">
+                  <div class="plan-details">
+                    <h4>3 months</h4>
+                    <p>Short-term financing</p>
+                  </div>
+                  <div class="plan-rate">0% APR</div>
+                </div>
+                <div class="plan-option">
+                  <div class="plan-details">
+                    <h4>6 months</h4>
+                    <p>Medium-term financing</p>
+                  </div>
+                  <div class="plan-rate">0% APR</div>
+                </div>
+                <div class="plan-option">
+                  <div class="plan-details">
+                    <h4>12 months</h4>
+                    <p>Long-term financing</p>
+                  </div>
+                  <div class="plan-rate">10.99% APR</div>
+                </div>
+                <div class="plan-option">
+                  <div class="plan-details">
+                    <h4>24 months</h4>
+                    <p>Extended financing</p>
+                  </div>
+                  <div class="plan-rate">15.99% APR</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Two Column Layout for Varied Widths -->
+            <div class="two-column-section">
+              <!-- Credit Tips Card (Smaller) -->
+              <div class="info-card compact-card">
+                <h3>💡 Credit Tips</h3>
+                <div class="tips-content">
+                  <div class="tip-item">
+                    <h4>Pay on time</h4>
+                    <p>Payment history is 35% of your credit score</p>
+                  </div>
+                  <div class="tip-item">
+                    <h4>Keep balances low</h4>
+                    <p>Use less than 30% of available credit</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Special Offers Card (Larger) -->
+              <div class="info-card offer-card">
+                <div class="offer-header">
+                  <h3>🎉 Special Offers</h3>
+                  <span class="offer-badge">Limited Time</span>
+                </div>
+                <div class="offer-content">
+                  <div class="offer-item">
+                    <h4>0% APR Holiday Sale</h4>
+                    <p>Get 12 months 0% APR on purchases over $500 at select retailers</p>
+                    <button class="offer-cta">Learn More</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Affirm Disclaimer -->
+            <div class="disclaimer-card">
+              <div class="disclaimer-content">
+                <h4>Important Information</h4>
+                <p>Your rate will be 0–36% APR based on credit, and is subject to an eligibility check. Payment options through Affirm are provided by these lending partners: <a href="#">affirm.com/lenders</a>. Options depend on your purchase amount, and a down payment may be required. CA residents: Loans by Affirm Loan Services, LLC are made or arranged pursuant to California Finance Lenders Law license 60DBO-111681. For licenses and disclosures, see <a href="#">affirm.com/licenses</a>.</p>
+                
+                <div class="legal-links">
+                  <a href="#">Privacy Policy</a>
+                  <a href="#">Terms of Service</a>
+                  <a href="#">Licenses</a>
+                  <a href="#">Do Not Sell My Info</a>
+                </div>
+                
+                <div class="affirm-branding">
+                  <p>Powered by <strong>Affirm</strong> • Making it easier to pay over time</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <nav class="tab-bar" aria-label="Primary navigation" id="tab-bar">
+        <img 
+          src="https://pfst.cf2.poecdn.net/base/image/95c7da684826f668301c16ade7d9d290885c2954368c03ce4baede2f16f30060?w=1125&h=236"
+          alt="Navigation bar with Home, Deals, Card, Manage, and Money tabs"
+        />
+      </nav>
+    </div>
+
+    <!-- Main Settings Modal -->
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" id="settings-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-title">Edit purchasing power</h2>
+          <button class="close-btn" type="button" aria-label="Close editor">
+            <svg viewBox="0 0 24 24">
+              <path d="m6 6 12 12"></path>
+              <path d="m18 6-12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="editor-card" id="settings-editor">
+          <!-- Content will be dynamically populated based on current page -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" type="button" data-action="cancel">
+            Cancel
+          </button>
+          <button class="btn-primary" type="button" data-action="save">
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Edit Modal -->
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" id="activity-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Edit Activity</h2>
+          <button class="close-btn" type="button" aria-label="Close editor" id="activity-close-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="m6 6 12 12"></path>
+              <path d="m18 6-12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="editor-card">
+          <div class="editor-field">
+            <label for="activity-name">Transaction name</label>
+            <div class="input-shell">
+              <input
+                id="activity-name"
+                name="activity-name"
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="activity-date">Date and details</label>
+            <div class="input-shell">
+              <input
+                id="activity-date"
+                name="activity-date"
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="activity-amount">Amount</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="activity-amount"
+                name="activity-amount"
+                type="number"
+                step="0.01"
+                value=""
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label class="checkbox-label">
+              <input
+                id="is-positive"
+                type="checkbox"
+              />
+              <span class="checkbox-text">This is a payment (positive)</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-danger" type="button" id="delete-activity-btn">
+            Delete
+          </button>
+          <button class="btn-outline" type="button" id="activity-cancel-btn">
+            Cancel
+          </button>
+          <button class="btn-primary" type="button" id="save-activity-btn">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spending Limits Modal -->
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" id="spending-limits-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Edit Spending Limits</h2>
+          <button class="close-btn" type="button" aria-label="Close editor" id="spending-limits-close-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="m6 6 12 12"></path>
+              <path d="m18 6-12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="editor-card">
+          <div class="editor-field">
+            <label for="daily-limit">Daily Purchase Limit</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="daily-limit"
+                name="daily-limit"
+                type="number"
+                min="100"
+                max="10000"
+                step="50"
+                value="2500"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="daily-slider">Adjust daily limit</label>
+            <input
+              id="daily-slider"
+              class="Slider"
+              type="range"
+              min="100"
+              max="10000"
+              step="50"
+              value="2500"
+            />
+          </div>
+          <div class="editor-field">
+            <label for="atm-limit">ATM Withdrawal Limit</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="atm-limit"
+                name="atm-limit"
+                type="number"
+                min="50"
+                max="1000"
+                step="25"
+                value="500"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="atm-slider">Adjust ATM limit</label>
+            <input
+              id="atm-slider"
+              class="Slider"
+              type="range"
+              min="50"
+              max="1000"
+              step="25"
+              value="500"
+            />
+          </div>
+          <div class="editor-meta">
+            <span>Limits reset daily at midnight</span>
+            <span>Changes take effect immediately</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-outline" type="button" id="spending-limits-cancel-btn">
+            Cancel
+          </button>
+          <button class="btn-primary" type="button" id="save-spending-limits-btn">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24">
+        <path d="m5 13 4 4L19 7"></path>
+      </svg>
+      <span id="toast-message">Purchasing power updated</span>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="search-modal" id="search-modal">
+      <div class="search-modal-header" style="position: relative;">
+        <img 
+          src="https://pfst.cf2.poecdn.net/base/image/ff937e2996e75c744a8b272c4f16b3798ad71a1b7a9dcf98008c271071a0716c?w=1049&h=238"
+          alt="Search header"
+          style="width: 100%; height: auto; display: block;"
+        />
+        <!-- Invisible search input positioned over the search bar in the image -->
+        <input
+          type="search"
+          class="search-modal-input"
+          placeholder="Find a store to pay over time"
+          aria-label="Search stores"
+          id="search-input"
+          style="position: absolute; top: 60%; left: 15%; right: 25%; height: 30%; transform: translateY(-50%); background: transparent; border: none; outline: none; font-size: 0.85rem; color: var(--text-primary); font-weight: 500; padding: 0 1rem;"
+        />
+        <!-- Invisible cancel button positioned over the Cancel text in the image -->
+        <button 
+          class="search-cancel" 
+          id="search-cancel" 
+          style="position: absolute; top: 0; right: 0; bottom: 0; width: 20%; background: transparent; border: none; cursor: pointer; color: transparent;"
+        >Cancel</button>
+      </div>
+      <div class="search-modal-content" id="search-content">
+        <!-- Search results will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dark mode detection and handling
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+    
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+      if (event.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+
+    // Enhanced localStorage with comprehensive data management
+    const AppStorage = {
+      // Try localStorage first, fallback to in-memory storage
+      storage: (() => {
+        try {
+          const test = '__storage_test__';
+          localStorage.setItem(test, 'test');
+          localStorage.removeItem(test);
+          return localStorage;
+        } catch (e) {
+          console.warn('localStorage not available, using in-memory storage');
+          return {
+            data: {},
+            setItem(key, value) { this.data[key] = value; },
+            getItem(key) { return this.data[key] || null; },
+            removeItem(key) { delete this.data[key]; }
+          };
+        }
+      })(),
+
+      save(key, value) {
+        try {
+          this.storage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+        } catch (e) {
+          console.error('Failed to save data:', key, e);
+        }
+      },
+
+      load(key, defaultValue = null) {
+        try {
+          const value = this.storage.getItem(key);
+          if (value === null) return defaultValue;
+          
+          // Try to parse as JSON, fallback to string
+          try {
+            return JSON.parse(value);
+          } catch {
+            return value;
+          }
+        } catch (e) {
+          console.error('Failed to load data:', key, e);
+          return defaultValue;
+        }
+      },
+
+      remove(key) {
+        try {
+          this.storage.removeItem(key);
+        } catch (e) {
+          console.error('Failed to remove data:', key, e);
+        }
+      },
+
+      // Save all app state
+      saveAppState() {
+        const state = {
+          purchasingPower: getCurrentPurchasingPower(),
+          maxCredit: getMaxCredit(),
+          showPrequalified: getShowPrequalified(),
+          cardData: cardData,
+          creditScore: currentCreditScore,
+          activityData: activityData,
+          spendingLimits: spendingLimits,
+          cardStatus: cardStatus,
+          timestamp: Date.now()
+        };
+        this.save('appState', state);
+      },
+
+      // Load all app state
+      loadAppState() {
+        const state = this.load('appState');
+        if (state && state.timestamp) {
+          // Restore all data
+          if (state.purchasingPower) this.save('purchasing-power', state.purchasingPower.toString());
+          if (state.maxCredit) this.save('max-credit', state.maxCredit.toString());
+          if (state.showPrequalified !== undefined) this.save('show-prequalified', state.showPrequalified.toString());
+          if (state.cardData) this.save('card-data', state.cardData);
+          if (state.creditScore) this.save('credit-score', state.creditScore.toString());
+          if (state.activityData) this.save('card-activity-data', state.activityData);
+          if (state.spendingLimits) this.save('spending-limits', state.spendingLimits);
+          if (state.cardStatus) this.save('card-status', state.cardStatus);
+          return true;
+        }
+        return false;
+      }
+    };
+
+    // Legacy storage functions for compatibility
+    const saveData = (key, value) => AppStorage.save(key, value);
+    const loadData = (key) => AppStorage.load(key);
+
+    // Startup screen logic
+    let hasStartupShown = false;
+    
+    const showMainApp = () => {
+      const startupScreen = document.getElementById('startup-screen');
+      const mainApp = document.getElementById('main-app');
+      
+      startupScreen.classList.add('hidden');
+      setTimeout(() => {
+        startupScreen.style.display = 'none';
+        mainApp.classList.add('visible');
+        hasStartupShown = true;
+      }, 800);
+    };
+
+    // Auto-advance startup screen after 3 seconds
+    setTimeout(showMainApp, 3000);
+
+    // Allow clicking startup logo to skip
+    const startupLogo = document.querySelector('.startup-logo');
+    if (startupLogo) {
+      startupLogo.addEventListener('click', () => {
+        if (!hasStartupShown) {
+          showMainApp();
+        }
+      });
+    }
+
+    // Data storage initialization with proper loading
+    let cardData = AppStorage.load('card-data', {
+      number: '**** **** **** 4242',
+      expiry: '12/28',
+      name: 'John Doe',
+      limit: 12000
+    });
+
+    let spendingLimits = AppStorage.load('spending-limits', {
+      daily: 2500,
+      dailyUsed: 600,
+      atm: 500,
+      atmUsed: 0
+    });
+
+    let currentCreditScore = parseInt(AppStorage.load('credit-score', '742'));
+
+    let cardStatus = AppStorage.load('card-status', {
+      frozen: false,
+      activated: true,
+      pinSet: true
+    });
+
+    let activityData = AppStorage.load('card-activity-data', [
+      { name: 'Amazon.com', date: 'Dec 15, 2024 • Online Purchase', amount: -459.99 },
+      { name: 'Payment Received', date: 'Dec 10, 2024 • AutoPay', amount: 76.67 },
+      { name: 'Target Store #1234', date: 'Dec 8, 2024 • In-Store Purchase', amount: -189.50 }
+    ]);
+
+    let currentEditingIndex = -1;
+
+    // Page management
+    let currentPage = 'home';
+
+    // Helper functions to get current values
+    const getMaxCredit = () => {
+      const saved = loadData('max-credit');
+      return saved ? parseInt(saved) : 12000;
+    };
+
+    const getCurrentPurchasingPower = () => {
+      const saved = loadData('purchasing-power');
+      return saved ? parseInt(saved) : 7500;
+    };
+
+    const getShowPrequalified = () => {
+      const saved = loadData('show-prequalified');
+      return saved !== 'false';
+    };
+    
+    const showPage = (pageName) => {
+      // Instant page switching - remove all delays
+      const pages = document.querySelectorAll('.page');
+      const targetPage = document.querySelector(`.${pageName}-page`);
+      
+      // Instantly hide all pages and show target
+      pages.forEach(page => {
+        if (page !== targetPage) {
+          page.classList.remove('active');
+        }
+      });
+      targetPage.classList.add('active');
+      
+      // Batch DOM updates for instant visual feedback
+      const brandLogo = document.querySelector('.brand-logo');
+      const header = document.querySelector('.top-bar');
+      const homeTopImage = document.querySelector('.home-top-image');
+      const tabBarImg = document.querySelector('.tab-bar img');
+      
+      // Pre-cache page-specific updates for instant switching
+      if (pageName === 'money') {
+        header.style.display = 'flex';
+        brandLogo.className = 'brand-logo money-title';
+        brandLogo.textContent = 'Money';
+        homeTopImage.style.display = 'block';
+        const img = homeTopImage.querySelector('img');
+        if (img) img.style.marginTop = '-0.75rem';
+        if (tabBarImg) {
+          tabBarImg.src = 'https://pfst.cf2.poecdn.net/base/image/51edba22c7ef6843e3cf4e7002a15e0c5e9bc6282755b54e3bc6495a4226b38e?w=1125&h=236';
+        }
+      } else if (pageName === 'card') {
+        header.style.display = 'flex';
+        brandLogo.className = 'brand-logo money-title';
+        brandLogo.textContent = 'Card';
+        homeTopImage.style.display = 'block';
+        const img = homeTopImage.querySelector('img');
+        if (img) img.style.marginTop = '-0.75rem';
+        if (tabBarImg) {
+          tabBarImg.src = 'https://pfst.cf2.poecdn.net/base/image/9cd8c963755ac5567a6335ebfa87eabd934726617b8a1a593a84ad6fd754f71d?w=1125&h=236';
+        }
+      } else {
+        header.style.display = 'flex';
+        homeTopImage.style.display = pageName === 'home' ? 'block' : 'none';
+        const img = homeTopImage.querySelector('img');
+        if (img) img.style.marginTop = '-0.25rem';
+        brandLogo.className = 'brand-logo';
+        brandLogo.textContent = '';
+        if (tabBarImg) {
+          tabBarImg.src = 'https://pfst.cf2.poecdn.net/base/image/95c7da684826f668301c16ade7d9d290885c2954368c03ce4baede2f16f30060?w=1125&h=236';
+        }
+      }
+      
+      currentPage = pageName;
+      
+      // Instant page-specific updates
+      if (pageName === 'card') {
+        updateCardPageValues();
+      }
+    };
+
+    // Function to calculate and update next payment date
+    const getNextPaymentDate = () => {
+      const now = new Date();
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${monthNames[nextMonth.getMonth()]} ${nextMonth.getDate()}`;
+    };
+
+    // Function to update card page values based on purchasing power data
+    const updateCardPageValues = () => {
+      const maxCredit = getMaxCredit(); // Get current max credit setting
+      const currentPower = getCurrentPurchasingPower(); // Get current purchasing power
+      const currentUsed = maxCredit - currentPower; // Calculate used amount
+      
+      // Update available credit (max credit) and current balance (purchasing power)
+      const availableCredit = document.getElementById('available-credit');
+      const currentBalance = document.getElementById('current-balance');
+      const nextPayment = document.getElementById('next-payment');
+      
+      if (availableCredit) availableCredit.textContent = `$${maxCredit.toLocaleString()}`;
+      if (currentBalance) currentBalance.textContent = `$${currentPower.toLocaleString()}`;
+      
+      // Update next payment with dynamic date
+      const nextPaymentDate = getNextPaymentDate();
+      if (nextPayment) nextPayment.textContent = `$76.67 due ${nextPaymentDate}`;
+    };
+
+    // Function to update progress bar on money page
+    const updateProgressBar = () => {
+      const maxCredit = getMaxCredit();
+      const currentPower = getCurrentPurchasingPower();
+      const usedAmount = maxCredit - currentPower;
+      const percentage = (usedAmount / maxCredit) * 100;
+      
+      const progressUsed = document.getElementById('progress-used');
+      const progressMax = document.getElementById('progress-max');
+      const progressBarFill = document.getElementById('progress-bar-fill');
+      
+      if (progressUsed) progressUsed.textContent = `Used $${usedAmount.toLocaleString()}`;
+      if (progressMax) progressMax.textContent = `Max $${maxCredit.toLocaleString()}`;
+      if (progressBarFill) progressBarFill.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
+    };
+
+    // Initialize all editable elements with click handlers
+    const initializeEditableElements = () => {
+      // Power card area
+      const powerCardArea = document.querySelector('#power-card-area');
+      if (powerCardArea) {
+        powerCardArea.style.cursor = 'pointer';
+        powerCardArea.addEventListener('click', openModal);
+      }
+      
+      // Card display area
+      const cardDisplayArea = document.querySelector('#card-display-area');
+      if (cardDisplayArea) {
+        cardDisplayArea.style.cursor = 'pointer';
+        cardDisplayArea.addEventListener('click', openModal);
+      }
+      
+      // Credit score display
+      const creditScoreDisplay = document.querySelector('#credit-score-display');
+      if (creditScoreDisplay) {
+        creditScoreDisplay.style.cursor = 'pointer';
+        creditScoreDisplay.addEventListener('click', showCreditScoreModal);
+      }
+      
+      // Spending limits section
+      const spendingLimitsSection = document.querySelector('#spending-limits-section');
+      if (spendingLimitsSection) {
+        spendingLimitsSection.style.cursor = 'pointer';
+        spendingLimitsSection.addEventListener('click', openSpendingLimitsModal);
+      }
+      
+      // Setup card controls
+      setupCardControlsEventListeners();
+      
+      // Setup support services
+      setupSupportServices();
+      
+      // Render activity items with click handlers
+      renderActivityItems();
+    };
+
+    // Comprehensive app initialization
+    const initializeApp = () => {
+      // Load all saved data first
+      AppStorage.loadAppState();
+      
+      // Re-load card data after state load to ensure it's current
+      cardData = AppStorage.load('card-data', cardData);
+      
+      // Initialize all interactive elements
+      initializeEditableElements();
+      
+      // Update displays with loaded data
+      updateCardDisplays();
+      updateCardPageValues();
+      updateProgressBar();
+      updateSpendingLimitsDisplay();
+      updateCreditScoreDisplay(currentCreditScore);
+      updateCardControlsUI();
+      
+      // Setup all event listeners
+      setupAllEventListeners();
+    };
+
+    // Initialize the app properly with all functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const brandLogo = document.querySelector('.brand-logo');
+      const homeTopImage = document.querySelector('.home-top-image');
+      
+      if (brandLogo) {
+        brandLogo.textContent = '';
+        brandLogo.classList.remove('money-title');
+      }
+      
+      // Ensure home page icons show immediately
+      if (homeTopImage) {
+        homeTopImage.style.display = 'block';
+      }
+      
+      // Initialize all app components
+      initializeApp();
+    });
+
+    // Navigation - Instant page switching
+    const setupNavigationListeners = () => {
+      const tabBar = document.querySelector("#tab-bar");
+      if (tabBar) {
+        tabBar.addEventListener("click", (e) => {
+          e.preventDefault();
+          
+          // Use requestAnimationFrame for immediate visual feedback
+          requestAnimationFrame(() => {
+            // Detect click on tab area with better detection
+            const rect = tabBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const tabWidth = rect.width / 5; // 5 tabs: Home, Deals, Card, Manage, Money
+            
+            // More precise tab detection - immediate page switching
+            if (clickX >= 0 && clickX < tabWidth) {
+              // Home tab (1st) - instant switch
+              showPage('home');
+            } else if (clickX >= tabWidth * 2 && clickX < tabWidth * 3) {
+              // Card tab (3rd) - instant switch
+              showPage('card');
+            } else if (clickX >= tabWidth * 4 && clickX < tabWidth * 5) {
+              // Money tab (5th) - instant switch
+              showPage('money');
+            }
+          });
+        });
+      }
+    };
+
+    // Apple Wallet functionality
+    const setupAppleWalletListener = () => {
+      const addToWalletBtn = document.querySelector('#add-to-wallet');
+      if (addToWalletBtn) {
+        addToWalletBtn.addEventListener('click', () => {
+          // Check if this is iOS
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+          
+          if (isIOS) {
+            // Try to open Wallet app using proper URL scheme
+            try {
+              // First try the shoebox:// scheme for Wallet app
+              window.location.href = 'shoebox://';
+              
+              // Fallback if the app doesn't open within 1 second
+              setTimeout(() => {
+                // Open Apple Wallet web interface instead of the add-card page
+                window.open('https://wallet.apple.com/', '_system');
+              }, 1000);
+            } catch (error) {
+              // Fallback for any errors
+              window.open('https://wallet.apple.com/', '_system');
+            }
+          } else {
+            // For non-iOS devices, show a message
+            showToast('Apple Wallet is only available on iOS devices');
+          }
+        });
+      }
+    };
+
+    // Modal and settings management
+    const modalBackdrop = document.querySelector("#settings-modal");
+    const toast = document.querySelector(".toast");
+    const toastMessage = document.querySelector("#toast-message");
+
+    const formatCurrency = (value) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 0,
+      }).format(value);
+
+    const openModal = () => {
+      const modalTitle = document.querySelector('#modal-title');
+      const settingsEditor = document.querySelector('#settings-editor');
+      
+      if (currentPage === 'money') {
+        modalTitle.textContent = 'Edit purchasing power';
+        settingsEditor.innerHTML = `
+          <div class="editor-field">
+            <label for="max-credit-amount">Max credit limit</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="max-credit-amount"
+                name="max-credit-amount"
+                type="number"
+                min="5000"
+                max="50000"
+                step="100"
+                value="${getMaxCredit()}"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="power-amount">Available purchasing power</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="power-amount"
+                name="power-amount"
+                type="number"
+                min="500"
+                max="20000"
+                step="50"
+                value="${getCurrentPurchasingPower()}"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="power-slider">Adjust with slider</label>
+            <input
+              id="power-slider"
+              class="Slider"
+              type="range"
+              min="500"
+              max="20000"
+              step="50"
+              value="${getCurrentPurchasingPower()}"
+              aria-describedby="slider-helper"
+            />
+          </div>
+          <div class="editor-meta" id="slider-helper">
+            <span>Minimum $500</span>
+            <span>Maximum $20,000</span>
+          </div>
+          <div class="editor-field">
+            <label class="checkbox-label">
+              <input
+                id="show-prequalified"
+                type="checkbox"
+                ${getShowPrequalified() ? 'checked' : ''}
+              />
+              <span class="checkbox-text">Show prequalified badge</span>
+            </label>
+          </div>
+        `;
+        
+        // Re-bind event listeners for money page
+        const amountInput = document.querySelector("#power-amount");
+        const sliderInput = document.querySelector("#power-slider");
+        
+        const syncInputs = (source) => {
+          const value = Math.max(
+            Number(sliderInput.min),
+            Math.min(Number(sliderInput.max), Number(source.value || sliderInput.value))
+          );
+          sliderInput.value = value;
+          amountInput.value = value;
+        };
+        
+        sliderInput.addEventListener("input", (event) => syncInputs(event.target));
+        amountInput.addEventListener("input", (event) => syncInputs(event.target));
+        
+        amountInput.focus();
+      } else if (currentPage === 'card') {
+        modalTitle.textContent = 'Edit card information';
+        settingsEditor.innerHTML = `
+          <div class="editor-field">
+            <label for="card-number-input">Card Number</label>
+            <div class="input-shell">
+              <input
+                id="card-number-input"
+                name="card-number"
+                type="text"
+                value="${cardData.number}"
+                placeholder="**** **** **** 0000"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="card-expiry-input">Expiry Date</label>
+            <div class="input-shell">
+              <input
+                id="card-expiry-input"
+                name="card-expiry"
+                type="text"
+                value="${cardData.expiry}"
+                placeholder="MM/YY"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="card-name-input">Cardholder Name</label>
+            <div class="input-shell">
+              <input
+                id="card-name-input"
+                name="card-name"
+                type="text"
+                value="${cardData.name}"
+                placeholder="John Doe"
+              />
+            </div>
+          </div>
+          <div class="editor-field">
+            <label for="card-limit-input">Credit Limit</label>
+            <div class="input-shell">
+              <span>$</span>
+              <input
+                id="card-limit-input"
+                name="card-limit"
+                type="number"
+                min="1000"
+                max="50000"
+                step="100"
+                value="${cardData.limit}"
+              />
+            </div>
+          </div>
+        `;
+        
+        document.querySelector('#card-number-input').focus();
+      }
+      
+      modalBackdrop.classList.add("active");
+      modalBackdrop.setAttribute("aria-hidden", "false");
+    };
+
+    const closeModal = () => {
+      modalBackdrop.classList.remove("active");
+      modalBackdrop.setAttribute("aria-hidden", "true");
+    };
+
+    const showToast = (message) => {
+      toastMessage.textContent = message;
+      toast.style.display = 'flex';
+      toast.classList.add("active");
+      setTimeout(() => {
+        toast.classList.remove("active");
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, 200);
+      }, 2200);
+    };
+
+    const updatePowerDisplays = (value, showPrequalified) => {
+      const formattedValue = formatCurrency(value);
+      const powerDisplay = document.querySelector('[data-bind="currentPower"]');
+      const homeBalanceDisplay = document.querySelector('[data-bind="homeBalance"]');
+      const prequalifiedChip = document.querySelector(".power-chip");
+      
+      if (powerDisplay) {
+        powerDisplay.childNodes[0].nodeValue = formattedValue;
+      }
+      if (homeBalanceDisplay) {
+        homeBalanceDisplay.textContent = formattedValue;
+      }
+      if (prequalifiedChip) {
+        prequalifiedChip.style.display = showPrequalified ? 'inline-flex' : 'none';
+      }
+      
+      // Update progress bar and card page values when purchasing power changes
+      updateProgressBar();
+      updateCardPageValues();
+    };
+
+    const updateCardDisplays = () => {
+      const cardNumber = document.querySelector('#card-number');
+      const cardExpiry = document.querySelector('#card-expiry');
+      const cardName = document.querySelector('#card-name');
+      
+      if (cardNumber) cardNumber.textContent = cardData.number;
+      if (cardExpiry) cardExpiry.textContent = cardData.expiry;
+      if (cardName) cardName.textContent = cardData.name;
+    };
+
+    const handleSave = () => {
+      if (currentPage === 'money') {
+        const maxCreditInput = document.querySelector("#max-credit-amount");
+        const amountInput = document.querySelector("#power-amount");
+        const prequalifiedCheckbox = document.querySelector("#show-prequalified");
+        
+        const newMaxCredit = Number(maxCreditInput.value);
+        const newValue = Number(amountInput.value);
+        const showPrequalified = prequalifiedCheckbox.checked;
+        
+        // Save both values
+        saveData('max-credit', newMaxCredit.toString());
+        saveData('purchasing-power', newValue.toString());
+        saveData('show-prequalified', showPrequalified.toString());
+        
+        updatePowerDisplays(newValue, showPrequalified);
+        closeModal();
+        showToast("Purchasing power updated");
+        
+        // Save to comprehensive state
+        AppStorage.saveAppState();
+      } else if (currentPage === 'card') {
+        // Update card data object with input values
+        cardData.number = document.querySelector('#card-number-input').value || cardData.number;
+        cardData.expiry = document.querySelector('#card-expiry-input').value || cardData.expiry;
+        cardData.name = document.querySelector('#card-name-input').value || cardData.name;
+        cardData.limit = Number(document.querySelector('#card-limit-input').value) || cardData.limit;
+        
+        // Save card data properly using AppStorage
+        AppStorage.save('card-data', cardData);
+        
+        // Update displays immediately
+        updateCardDisplays();
+        updateCardPageValues();
+        
+        closeModal();
+        showToast("Card information updated");
+        
+        // Save to comprehensive state
+        AppStorage.saveAppState();
+      }
+    };
+
+    // Setup all event listeners in one place
+    const setupAllEventListeners = () => {
+      // Modal controls
+      const closeBtn = document.querySelector(".close-btn");
+      const cancelBtn = document.querySelector('[data-action="cancel"]');
+      const saveBtn = document.querySelector('[data-action="save"]');
+      
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+      if (saveBtn) saveBtn.addEventListener("click", handleSave);
+      
+      // Modal backdrop clicks
+      if (modalBackdrop) {
+        modalBackdrop.addEventListener("click", (event) => {
+          if (event.target === modalBackdrop) closeModal();
+        });
+      }
+      
+      // Activity modal listeners
+      setupActivityModalListeners();
+      
+      // Spending limits modal listeners
+      setupSpendingLimitsModalListeners();
+      
+      // Navigation
+      setupNavigationListeners();
+      
+      // Search functionality
+      setupSearchListeners();
+      
+      // Apple Wallet button
+      setupAppleWalletListener();
+      
+      // Auto-save on page unload
+      window.addEventListener('beforeunload', () => {
+        AppStorage.saveAppState();
+      });
+      
+      // Save periodically
+      setInterval(() => {
+        AppStorage.saveAppState();
+      }, 30000); // Save every 30 seconds
+
+      // Keyboard shortcuts
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          if (document.querySelector("#search-modal.active")) {
+            closeSearchModal();
+          } else if (modalBackdrop && modalBackdrop.classList.contains("active")) {
+            closeModal();
+          } else if (document.querySelector("#activity-modal.active")) {
+            closeActivityModal();
+          } else if (document.querySelector("#spending-limits-modal.active")) {
+            closeSpendingLimitsModal();
+          }
+        }
+      });
+    };
+
+    // Credit Score Management
+    const getCreditScoreRange = (score) => {
+      if (score >= 800) {
+        return '800-850 range';
+      } else if (score >= 740) {
+        return '740-799 range';
+      } else if (score >= 670) {
+        return '670-739 range';
+      } else if (score >= 580) {
+        return '580-669 range';
+      } else {
+        return '300-579 range';
+      }
+    };
+    
+    const updateCreditScoreDisplay = (score) => {
+      const scoreNumber = document.querySelector('#score-number');
+      const scoreLabel = document.querySelector('#score-label');
+      const scoreRange = document.querySelector('#score-range');
+      const scoreCircle = document.querySelector('#score-circle');
+      
+      if (!scoreNumber) return;
+      
+      scoreNumber.textContent = score;
+      
+      // Update label based on score
+      let label, color;
+      if (score >= 800) {
+        label = 'Exceptional Credit';
+        color = '#00a76f';
+      } else if (score >= 740) {
+        label = 'Very Good Credit';
+        color = '#00a76f';
+      } else if (score >= 670) {
+        label = 'Good Credit';
+        color = '#f6a100';
+      } else if (score >= 580) {
+        label = 'Fair Credit';
+        color = '#f6a100';
+      } else {
+        label = 'Poor Credit';
+        color = '#dc3545';
+      }
+      
+      scoreLabel.textContent = label;
+      scoreRange.textContent = getCreditScoreRange(score);
+      
+      // Update circle progress (score out of 850)
+      const percentage = Math.min(100, (score / 850) * 100);
+      const degrees = (percentage / 100) * 360;
+      
+      scoreCircle.style.background = `conic-gradient(from 0deg, ${color} 0deg ${degrees}deg, #e5e7eb ${degrees}deg 360deg)`;
+    };
+
+    const showCreditScoreModal = () => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1002;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 320px; width: 90%; margin: 1rem;">
+          <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">Edit Credit Score</h3>
+          <div style="margin-bottom: 1rem;">
+            <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">Credit Score (300-850)</label>
+            <input type="number" id="credit-score-input" min="300" max="850" value="${currentCreditScore}" 
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1rem;">
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button id="cancel-credit" style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; background: white; cursor: pointer;">Cancel</button>
+            <button id="save-credit" style="flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem; background: var(--affirm-blue); color: white; cursor: pointer;">Save</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const input = modal.querySelector('#credit-score-input');
+      const cancelBtn = modal.querySelector('#cancel-credit');
+      const saveBtn = modal.querySelector('#save-credit');
+      
+      input.focus();
+      input.select();
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      cancelBtn.addEventListener('click', closeModal);
+      
+      saveBtn.addEventListener('click', () => {
+        const newScore = Math.max(300, Math.min(850, parseInt(input.value) || currentCreditScore));
+        currentCreditScore = newScore;
+        updateCreditScoreDisplay(newScore);
+        saveData('credit-score', newScore.toString());
+        AppStorage.saveAppState();
+        closeModal();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    };
+
+    // Recent Activity Management (for card page transactions)
+    const renderActivityItems = () => {
+      const container = document.querySelector('#card-recent-activity');
+      
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      activityData.forEach((activity, index) => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.dataset.activityIndex = index;
+        item.style.cursor = 'pointer';
+        
+        const amountClass = activity.amount > 0 ? 'positive' : 'negative';
+        const formattedAmount = activity.amount > 0 ? `+$${Math.abs(activity.amount).toFixed(2)}` : `-$${Math.abs(activity.amount).toFixed(2)}`;
+        
+        item.innerHTML = `
+          <div class="activity-details">
+            <h4>${activity.name}</h4>
+            <p>${activity.date}</p>
+          </div>
+          <div class="activity-amount ${amountClass}">${formattedAmount}</div>
+        `;
+        
+        item.addEventListener('click', () => openActivityModal(index));
+        container.appendChild(item);
+      });
+    };
+
+    const openActivityModal = (index) => {
+      currentEditingIndex = index;
+      const activity = activityData[index];
+      
+      const activityModal = document.querySelector('#activity-modal');
+      const activityNameInput = document.querySelector('#activity-name');
+      const activityDateInput = document.querySelector('#activity-date');
+      const activityAmountInput = document.querySelector('#activity-amount');
+      const isPositiveCheckbox = document.querySelector('#is-positive');
+      
+      activityNameInput.value = activity.name;
+      activityDateInput.value = activity.date;
+      activityAmountInput.value = Math.abs(activity.amount);
+      isPositiveCheckbox.checked = activity.amount > 0;
+      
+      activityModal.classList.add('active');
+      activityModal.setAttribute('aria-hidden', 'false');
+      activityNameInput.focus();
+    };
+
+    const closeActivityModal = () => {
+      const activityModal = document.querySelector('#activity-modal');
+      activityModal.classList.remove('active');
+      activityModal.setAttribute('aria-hidden', 'true');
+      currentEditingIndex = -1;
+    };
+
+    const setupActivityModalListeners = () => {
+      const activityModal = document.querySelector('#activity-modal');
+      const activityCloseBtn = document.querySelector('#activity-close-btn');
+      const activityCancelBtn = document.querySelector('#activity-cancel-btn');
+      const saveActivityBtn = document.querySelector('#save-activity-btn');
+      const deleteActivityBtn = document.querySelector('#delete-activity-btn');
+      const activityNameInput = document.querySelector('#activity-name');
+      const activityDateInput = document.querySelector('#activity-date');
+      const activityAmountInput = document.querySelector('#activity-amount');
+      const isPositiveCheckbox = document.querySelector('#is-positive');
+
+      if (activityCloseBtn) activityCloseBtn.addEventListener('click', closeActivityModal);
+      if (activityCancelBtn) activityCancelBtn.addEventListener('click', closeActivityModal);
+
+      if (activityModal) {
+        activityModal.addEventListener('click', (e) => {
+          if (e.target === activityModal) closeActivityModal();
+        });
+      }
+
+      if (saveActivityBtn) {
+        saveActivityBtn.addEventListener('click', () => {
+          if (currentEditingIndex >= 0) {
+            const amount = parseFloat(activityAmountInput.value) || 0;
+            activityData[currentEditingIndex] = {
+              name: activityNameInput.value || 'Transaction',
+              date: activityDateInput.value || 'Date unknown',
+              amount: isPositiveCheckbox.checked ? amount : -amount
+            };
+            
+            renderActivityItems();
+            saveData('card-activity-data', activityData);
+            AppStorage.saveAppState();
+            closeActivityModal();
+            showToast('Transaction updated');
+          }
+        });
+      }
+
+      if (deleteActivityBtn) {
+        deleteActivityBtn.addEventListener('click', () => {
+          if (currentEditingIndex >= 0) {
+            activityData.splice(currentEditingIndex, 1);
+            renderActivityItems();
+            saveData('card-activity-data', activityData);
+            AppStorage.saveAppState();
+            closeActivityModal();
+            showToast('Transaction deleted');
+          }
+        });
+      }
+    };
+
+    // Spending Limits Management
+    const updateSpendingLimitsDisplay = () => {
+      const limitItems = document.querySelectorAll('.limit-item');
+      
+      limitItems.forEach((item, index) => {
+        const limitType = item.dataset.limitType;
+        const amountElement = item.querySelector('.limit-amount');
+        const usedElement = item.querySelector('.limit-used');
+        const progressBar = item.querySelector('.limit-bar span');
+        
+        if (limitType === 'daily') {
+          amountElement.textContent = `$${spendingLimits.daily.toLocaleString()}`;
+          usedElement.textContent = `$${spendingLimits.dailyUsed} used today`;
+          const percentage = (spendingLimits.dailyUsed / spendingLimits.daily) * 100;
+          progressBar.style.width = `${Math.min(100, percentage)}%`;
+        } else if (limitType === 'atm') {
+          amountElement.textContent = `$${spendingLimits.atm.toLocaleString()}`;
+          usedElement.textContent = `$${spendingLimits.atmUsed} used today`;
+          const percentage = (spendingLimits.atmUsed / spendingLimits.atm) * 100;
+          progressBar.style.width = `${Math.min(100, percentage)}%`;
+        }
+      });
+    };
+
+    const openSpendingLimitsModal = () => {
+      const spendingLimitsModal = document.querySelector('#spending-limits-modal');
+      
+      // Sync current values to modal inputs
+      document.querySelector('#daily-limit').value = spendingLimits.daily;
+      document.querySelector('#daily-slider').value = spendingLimits.daily;
+      document.querySelector('#atm-limit').value = spendingLimits.atm;
+      document.querySelector('#atm-slider').value = spendingLimits.atm;
+      
+      spendingLimitsModal.classList.add('active');
+      spendingLimitsModal.setAttribute('aria-hidden', 'false');
+      
+      // Setup slider synchronization
+      const dailyInput = document.querySelector('#daily-limit');
+      const dailySlider = document.querySelector('#daily-slider');
+      const atmInput = document.querySelector('#atm-limit');
+      const atmSlider = document.querySelector('#atm-slider');
+      
+      const syncDailyInputs = (source) => {
+        const value = Math.max(
+          Number(dailySlider.min),
+          Math.min(Number(dailySlider.max), Number(source.value || dailySlider.value))
+        );
+        dailySlider.value = value;
+        dailyInput.value = value;
+      };
+      
+      const syncAtmInputs = (source) => {
+        const value = Math.max(
+          Number(atmSlider.min),
+          Math.min(Number(atmSlider.max), Number(source.value || atmSlider.value))
+        );
+        atmSlider.value = value;
+        atmInput.value = value;
+      };
+      
+      dailySlider.addEventListener('input', (event) => syncDailyInputs(event.target));
+      dailyInput.addEventListener('input', (event) => syncDailyInputs(event.target));
+      atmSlider.addEventListener('input', (event) => syncAtmInputs(event.target));
+      atmInput.addEventListener('input', (event) => syncAtmInputs(event.target));
+      
+      dailyInput.focus();
+    };
+
+    const closeSpendingLimitsModal = () => {
+      const spendingLimitsModal = document.querySelector('#spending-limits-modal');
+      spendingLimitsModal.classList.remove('active');
+      spendingLimitsModal.setAttribute('aria-hidden', 'true');
+    };
+
+    const setupSpendingLimitsModalListeners = () => {
+      const spendingLimitsModal = document.querySelector('#spending-limits-modal');
+      const spendingLimitsCloseBtn = document.querySelector('#spending-limits-close-btn');
+      const spendingLimitsCancelBtn = document.querySelector('#spending-limits-cancel-btn');
+      const saveSpendingLimitsBtn = document.querySelector('#save-spending-limits-btn');
+
+      if (spendingLimitsCloseBtn) spendingLimitsCloseBtn.addEventListener('click', closeSpendingLimitsModal);
+      if (spendingLimitsCancelBtn) spendingLimitsCancelBtn.addEventListener('click', closeSpendingLimitsModal);
+
+      if (spendingLimitsModal) {
+        spendingLimitsModal.addEventListener('click', (e) => {
+          if (e.target === spendingLimitsModal) closeSpendingLimitsModal();
+        });
+      }
+
+      if (saveSpendingLimitsBtn) {
+        saveSpendingLimitsBtn.addEventListener('click', () => {
+          spendingLimits.daily = parseInt(document.querySelector('#daily-limit').value) || spendingLimits.daily;
+          spendingLimits.atm = parseInt(document.querySelector('#atm-limit').value) || spendingLimits.atm;
+          
+          updateSpendingLimitsDisplay();
+          saveData('spending-limits', spendingLimits);
+          AppStorage.saveAppState();
+          closeSpendingLimitsModal();
+          showToast('Spending limits updated');
+        });
+      }
+    };
+
+    // Card Controls Management
+    const updateCardControlsUI = () => {
+      const freezeBtn = document.querySelector('#freeze-card');
+      const activateBtn = document.querySelector('#activate-card');
+      
+      if (freezeBtn) {
+        const freezeIcon = freezeBtn.querySelector('svg');
+        const freezeText = freezeBtn.querySelector('span');
+        
+        if (cardStatus.frozen) {
+          freezeText.textContent = 'Unfreeze Card';
+          freezeIcon.innerHTML = '<path d="M7 10V7a5 5 0 1 1 10 0v3"></path><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>';
+          freezeBtn.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+          freezeBtn.style.borderColor = 'rgba(220, 53, 69, 0.2)';
+          freezeBtn.style.color = '#dc3545';
+        } else {
+          freezeText.textContent = 'Freeze Card';
+          freezeIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><circle cx="12" cy="16" r="1"></circle><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
+          freezeBtn.style.backgroundColor = 'rgba(244, 245, 252, 0.7)';
+          freezeBtn.style.borderColor = 'rgba(93, 92, 222, 0.1)';
+          freezeBtn.style.color = 'var(--text-primary)';
+        }
+      }
+
+      if (activateBtn) {
+        const activateText = activateBtn.querySelector('span');
+        if (cardStatus.activated) {
+          activateText.textContent = 'Active';
+          activateBtn.style.backgroundColor = 'rgba(0, 167, 111, 0.1)';
+          activateBtn.style.borderColor = 'rgba(0, 167, 111, 0.2)';
+          activateBtn.style.color = '#00a76f';
+        } else {
+          activateText.textContent = 'Activate';
+          activateBtn.style.backgroundColor = 'rgba(244, 245, 252, 0.7)';
+          activateBtn.style.borderColor = 'rgba(93, 92, 222, 0.1)';
+          activateBtn.style.color = 'var(--text-primary)';
+        }
+      }
+    };
+
+    // Card control functions with proper functionality
+    const toggleCardFreeze = () => {
+      cardStatus.frozen = !cardStatus.frozen;
+      saveData('card-status', cardStatus);
+      AppStorage.saveAppState();
+      updateCardControlsUI();
+    };
+
+    const handleCardActivation = () => {
+      if (cardStatus.activated) {
+        return;
+      }
+      cardStatus.activated = true;
+      saveData('card-status', cardStatus);
+      AppStorage.saveAppState();
+      updateCardControlsUI();
+    };
+
+    const handleCardReplacement = () => {
+      showConfirmDialog(
+        'Order a replacement card? Your current card will be deactivated and you\'ll receive a new one in 5-7 business days.',
+        () => {
+          // Simulate card replacement process
+          cardData.number = '**** **** **** ' + Math.floor(1000 + Math.random() * 9000);
+          updateCardDisplays();
+          AppStorage.save('card-data', cardData);
+          AppStorage.saveAppState();
+        }
+      );
+    };
+
+    const handlePinSettings = () => {
+      showPinSettingsModal();
+    };
+
+    const setupCardControlsEventListeners = () => {
+      const freezeCardBtn = document.querySelector('#freeze-card');
+      const activateCardBtn = document.querySelector('#activate-card');
+      const replaceCardBtn = document.querySelector('#replace-card');
+      const pinSettingsBtn = document.querySelector('#pin-settings');
+
+      if (freezeCardBtn) freezeCardBtn.addEventListener('click', toggleCardFreeze);
+      if (activateCardBtn) activateCardBtn.addEventListener('click', handleCardActivation);
+      if (replaceCardBtn) replaceCardBtn.addEventListener('click', handleCardReplacement);
+      if (pinSettingsBtn) pinSettingsBtn.addEventListener('click', handlePinSettings);
+    };
+
+    // Custom modal dialog functions
+    const showConfirmDialog = (message, onConfirm) => {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1004;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 400px; width: 90%; margin: 1rem;">
+          <p style="color: var(--text-primary); margin: 0 0 1.5rem 0; font-size: 1rem; line-height: 1.5;">${message}</p>
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="cancel-btn" style="padding: 0.75rem 1.5rem; color: var(--text-secondary); background: transparent; border: 1px solid #ddd; border-radius: 0.5rem; cursor: pointer;">Cancel</button>
+            <button class="confirm-btn" style="padding: 0.75rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Confirm</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const cancelBtn = modal.querySelector('.cancel-btn');
+      const confirmBtn = modal.querySelector('.confirm-btn');
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      cancelBtn.addEventListener('click', closeModal);
+      confirmBtn.addEventListener('click', () => {
+        closeModal();
+        onConfirm();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    };
+
+    const showPinSettingsModal = () => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1004;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 400px; width: 90%; margin: 1rem;">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">PIN & Security Settings</h3>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">New PIN (4 digits)</label>
+            <input type="password" id="new-pin" maxlength="4" 
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1.2rem; text-align: center; letter-spacing: 0.5rem;"
+                   placeholder="••••">
+          </div>
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Confirm PIN</label>
+            <input type="password" id="confirm-pin" maxlength="4" 
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1.2rem; text-align: center; letter-spacing: 0.5rem;"
+                   placeholder="••••">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="cancel-btn" style="padding: 0.75rem 1.5rem; color: var(--text-secondary); background: transparent; border: 1px solid #ddd; border-radius: 0.5rem; cursor: pointer;">Cancel</button>
+            <button class="save-btn" style="padding: 0.75rem 1.5rem; background: var(--affirm-blue); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Update PIN</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const newPinInput = modal.querySelector('#new-pin');
+      const confirmPinInput = modal.querySelector('#confirm-pin');
+      const cancelBtn = modal.querySelector('.cancel-btn');
+      const saveBtn = modal.querySelector('.save-btn');
+      
+      // Only allow numbers
+      [newPinInput, confirmPinInput].forEach(input => {
+        input.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+      });
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      cancelBtn.addEventListener('click', closeModal);
+      saveBtn.addEventListener('click', () => {
+        const newPin = newPinInput.value;
+        const confirmPin = confirmPinInput.value;
+        
+        if (newPin.length !== 4 || confirmPin.length !== 4) {
+          return; // PIN must be 4 digits
+        }
+        
+        if (newPin !== confirmPin) {
+          return; // PINs don't match
+        }
+        
+        // Save PIN status
+        cardStatus.pinSet = true;
+        saveData('card-status', cardStatus);
+        AppStorage.saveAppState();
+        closeModal();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      
+      newPinInput.focus();
+    };
+
+    const showIssueReportModal = () => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1004;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 500px; width: 90%; margin: 1rem;">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Report an Issue</h3>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Issue Type</label>
+            <select id="issue-type" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1rem;">
+              <option value="">Select an issue type</option>
+              <option value="unauthorized">Unauthorized Transaction</option>
+              <option value="billing">Billing Error</option>
+              <option value="card-lost">Lost/Stolen Card</option>
+              <option value="technical">Technical Issue</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Description</label>
+            <textarea id="issue-description" rows="4" 
+                     style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1rem; resize: vertical;"
+                     placeholder="Please describe the issue in detail..."></textarea>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="cancel-btn" style="padding: 0.75rem 1.5rem; color: var(--text-secondary); background: transparent; border: 1px solid #ddd; border-radius: 0.5rem; cursor: pointer;">Cancel</button>
+            <button class="submit-btn" style="padding: 0.75rem 1.5rem; background: var(--affirm-blue); color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Submit Report</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const issueTypeSelect = modal.querySelector('#issue-type');
+      const issueDescriptionTextarea = modal.querySelector('#issue-description');
+      const cancelBtn = modal.querySelector('.cancel-btn');
+      const submitBtn = modal.querySelector('.submit-btn');
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      cancelBtn.addEventListener('click', closeModal);
+      submitBtn.addEventListener('click', () => {
+        const issueType = issueTypeSelect.value;
+        const description = issueDescriptionTextarea.value.trim();
+        
+        if (!issueType || !description) {
+          return; // Both fields required
+        }
+        
+        // Simulate issue submission
+        closeModal();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      
+      issueTypeSelect.focus();
+    };
+
+    const showStatementsModal = () => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1004;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 500px; width: 90%; margin: 1rem;">
+          <h3 style="margin: 0 0 1.5rem 0; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Account Statements</h3>
+          <div style="margin-bottom: 1.5rem;">
+            <div style="border: 1px solid #ddd; border-radius: 0.5rem; overflow: hidden;">
+              <div style="padding: 1rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.style.background='#f0f0f0'">
+                <div>
+                  <div style="font-weight: 600;">December 2024</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Statement Date: Dec 1, 2024</div>
+                </div>
+                <button style="background: var(--affirm-blue); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer;">Download</button>
+              </div>
+              <div style="padding: 1rem; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.style.background='#f0f0f0'">
+                <div>
+                  <div style="font-weight: 600;">November 2024</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Statement Date: Nov 1, 2024</div>
+                </div>
+                <button style="background: var(--affirm-blue); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer;">Download</button>
+              </div>
+              <div style="padding: 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="this.style.background='#f0f0f0'">
+                <div>
+                  <div style="font-weight: 600;">October 2024</div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary);">Statement Date: Oct 1, 2024</div>
+                </div>
+                <button style="background: var(--affirm-blue); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer;">Download</button>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="close-btn" style="padding: 0.75rem 1.5rem; color: var(--text-secondary); background: transparent; border: 1px solid #ddd; border-radius: 0.5rem; cursor: pointer;">Close</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const closeBtn = modal.querySelector('.close-btn');
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      closeBtn.addEventListener('click', closeModal);
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    };
+
+    const showLiveChatModal = () => {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1004;';
+      
+      modal.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 1rem; max-width: 500px; width: 90%; margin: 1rem; height: 600px; display: flex; flex-direction: column;">
+          <h3 style="margin: 0 0 1rem 0; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Live Chat Support</h3>
+          <div style="flex: 1; border: 1px solid #ddd; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; background: #f9f9f9; overflow-y: auto;">
+            <div style="background: #e3f2fd; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <strong>Support Agent:</strong> Hello! How can I help you today?
+            </div>
+            <div style="text-align: center; color: var(--text-tertiary); font-size: 0.9rem; margin: 2rem 0;">
+              Type your message below to start chatting...
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <input type="text" placeholder="Type your message here..." 
+                   style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 1rem;">
+            <button style="background: var(--affirm-blue); color: white; border: none; padding: 0.75rem 1rem; border-radius: 0.5rem; cursor: pointer;">Send</button>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="close-btn" style="padding: 0.75rem 1.5rem; color: var(--text-secondary); background: transparent; border: 1px solid #ddd; border-radius: 0.5rem; cursor: pointer;">Close Chat</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const closeBtn = modal.querySelector('.close-btn');
+      
+      const closeModal = () => {
+        document.body.removeChild(modal);
+      };
+      
+      closeBtn.addEventListener('click', closeModal);
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    };
+
+    // Support and Services Functions with proper functionality
+    const setupSupportServices = () => {
+      const reportIssueBtn = document.querySelector('#report-issue-btn');
+      const statementsBtn = document.querySelector('#statements-btn');
+      const liveChatBtn = document.querySelector('#live-chat-btn');
+      const callSupportBtn = document.querySelector('#call-support-btn');
+
+      if (reportIssueBtn) {
+        reportIssueBtn.addEventListener('click', showIssueReportModal);
+      }
+
+      if (statementsBtn) {
+        statementsBtn.addEventListener('click', showStatementsModal);
+      }
+
+      if (liveChatBtn) {
+        liveChatBtn.addEventListener('click', showLiveChatModal);
+      }
+
+      if (callSupportBtn) {
+        callSupportBtn.addEventListener('click', () => {
+          window.location.href = 'tel:+18554233729';
+        });
+      }
+    };
+
+    // Search functionality
+    const searchModal = document.querySelector("#search-modal");
+    const searchInput = document.querySelector("#search-input");
+    const searchCancel = document.querySelector("#search-cancel");
+    const searchContent = document.querySelector("#search-content");
+    const mainSearchBar = document.querySelector("#main-search-bar");
+
+    // Comprehensive store database
+    const storeDatabase = [
+      { name: "Amazon", details: "Free shipping, fast delivery", color: "#FF9900", logo: "https://logo.clearbit.com/amazon.com" },
+      { name: "Target", details: "Up to 18 mo. plans", color: "#CC0000", logo: "https://logo.clearbit.com/target.com" },
+      { name: "Walmart", details: "Everyday low prices", color: "#004C91", logo: "https://logo.clearbit.com/walmart.com" },
+      { name: "Best Buy", details: "Up to 24 mo. plans", color: "#0046BE", logo: "https://logo.clearbit.com/bestbuy.com" },
+      { name: "Apple", details: "0% APR financing", color: "#000000", logo: "https://logo.clearbit.com/apple.com" }
+    ];
+
+    const popularSearches = [
+      { name: "Amazon", details: "Free shipping, fast delivery", color: "#FF9900", logo: "https://logo.clearbit.com/amazon.com" },
+      { name: "Walmart", details: "Everyday low prices", color: "#004C91", logo: "https://logo.clearbit.com/walmart.com" },
+      { name: "Target", details: "Up to 18 mo. plans", color: "#CC0000", logo: "https://logo.clearbit.com/target.com" }
+    ];
+
+    const openSearchModal = () => {
+      searchModal.classList.add("active");
+      searchInput.focus();
+      displayPopularSearches();
+    };
+
+    const closeSearchModal = () => {
+      searchModal.classList.remove("active");
+      searchInput.value = "";
+    };
+
+    const displayPopularSearches = () => {
+      const popularHtml = popularSearches.map(store => createStoreResult(store)).join('');
+      searchContent.innerHTML = `
+        <div class="search-section">
+          <h3>Popular searches</h3>
+          <div class="search-results">
+            ${popularHtml}
+          </div>
+        </div>
+      `;
+    };
+
+    const createStoreResult = (store, query = "") => {
+      return `
+        <div class="store-result" data-store-name="${store.name.replace(/"/g, '&quot;')}">
+          <div class="store-logo" style="background-color: ${store.color}">
+            <img src="${store.logo}" alt="${store.name} logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div style="display:none; align-items:center; justify-content:center; width:100%; height:100%; font-size:0.8rem; color:white; font-weight:600;">${store.name.charAt(0)}</div>
+          </div>
+          <div class="store-info">
+            <div class="store-name">${store.name}</div>
+            <div class="store-details">${store.details}</div>
+          </div>
+        </div>
+      `;
+    };
+
+    const performSearch = (query) => {
+      if (!query.trim()) {
+        displayPopularSearches();
+        return;
+      }
+
+      const results = storeDatabase.filter(store => 
+        store.name.toLowerCase().includes(query.toLowerCase()) ||
+        store.details.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (results.length === 0) {
+        searchContent.innerHTML = `
+          <div class="no-results">
+            No stores found for "${query}"<br>
+            Try searching for something else
+          </div>
+        `;
+        return;
+      }
+
+      const resultsHtml = results.map(store => createStoreResult(store, query)).join('');
+      searchContent.innerHTML = `
+        <div class="search-section">
+          <h3>Search results for "${query}"</h3>
+          <div class="search-results">
+            ${resultsHtml}
+          </div>
+        </div>
+      `;
+    };
+
+    const setupSearchListeners = () => {
+      if (mainSearchBar) {
+        mainSearchBar.addEventListener("click", openSearchModal);
+      }
+      if (searchCancel) {
+        searchCancel.addEventListener("click", closeSearchModal);
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          performSearch(e.target.value);
+        });
+      }
+
+      // Event delegation for store result clicks
+      if (searchContent) {
+        searchContent.addEventListener("click", (e) => {
+          const storeResult = e.target.closest(".store-result");
+          if (storeResult) {
+            const storeName = storeResult.getAttribute("data-store-name");
+            closeSearchModal();
+            showToast(`Selected ${storeName}`);
+          }
+        });
+      }
+    };
+
+    // Preload the logo image for faster loading
+    const preloadImage = new Image();
+    preloadImage.src = 'https://pfst.cf2.poecdn.net/base/image/7df12beca90aa34ccfa1e4b209616a6fb60587c8ee5adc222a9df6a1f9aa0321?w=447&h=447';
+  </script>
+</body>
+</html>
